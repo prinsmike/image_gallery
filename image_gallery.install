@@ -1,0 +1,181 @@
+<?php
+function image_gallery_install() {
+  _image_gallery_install_navigation();
+  _image_gallery_install_variables();
+  _image_gallery_install_vocabulary();
+  _image_gallery_install_permissions();
+}
+
+function _image_gallery_install_variables() {
+  variable_set('pathauto_node_image_pattern', 'image/[node:title]');
+  variable_set('pathauto_node_slideshow_image_pattern', 'slideshow/[node:title]');
+}
+
+function get_vocabulary_ids($vocab_names = Array()) {
+  $vocab_ids = Array();
+  $vocabs = taxonomy_get_vocabularies();
+  foreach ($vocabs as $vocab) {
+    if (in_array($vocab->name, $vocab_names)) {
+      array_push($vocab_ids, $vocab->vid);
+    }
+  }
+  return $vocab_ids;
+}
+
+function _image_gallery_install_permissions() {
+  $manager_role = user_role_load_by_name('Manager');
+  $admin_role = user_role_load_by_name('Administrator');
+
+  $vocabs = array(
+    'Image Galleries',
+    'Slideshows',
+  );
+  
+  $vocabs = get_vocabulary_ids($vocabs);
+
+  $perms = array(
+    'create image content' => TRUE,
+    'edit own image content' => TRUE,
+    'edit any image content' => TRUE,
+    'delete own image content' => TRUE,
+    'delete any image content' => TRUE,
+    'create slideshow_image content' => TRUE,
+    'edit own slideshow_image content' => TRUE,
+    'edit any slideshow_image content' => TRUE,
+    'delete own slideshow_image content' => TRUE,
+    'delete any slideshow_image content' => TRUE,
+  );
+  foreach ($vocabs as $vocab) {
+    $perms['edit terms in '.$vocab] = TRUE;
+    $perms['delete terms in '.$vocab] = TRUE;
+  }
+  user_role_change_permissions($manager_role->rid, $perms);
+  user_role_change_permissions($admin_role->rid, $perms);
+}
+
+/**
+ * TODO: Remove this in favour of the workbench module.
+ *        Nobody uses this anyway. 
+ */
+function _image_gallery_install_navigation() {
+  $links = array(
+    array(
+      'link_title' => 'Image',
+      'link_path' => 'node/add/image',
+      'menu_name' => 'create-content',
+      'weight' => 0,
+    ),
+    array(
+      'link_title' => 'Image galleries',
+      'link_path' => 'admin/structure/taxonomy/image_galleries/add',
+      'menu_name' => 'create-cats',
+      'weight' => 0,
+    ),
+    array(
+      'link_title' => 'Image galleries',
+      'link_path' => 'admin/structure/taxonomy/image_galleries',
+      'menu_name' => 'manage-cats',
+      'weight' => 0,
+    ),
+  );
+  foreach ($links as $item) {
+    menu_link_save($item);
+  }
+
+  // Update the menu router information.
+  menu_rebuild();
+}
+
+function image_gallery_update_7101() {
+  $links = array(
+    array(
+      'link_title' => 'Image',
+      'link_path' => 'node/add/image',
+      'menu_name' => 'create-content',
+      'weight' => 0,
+    ),
+    array(
+      'link_title' => 'Image galleries',
+      'link_path' => 'admin/structure/taxonomy/image_gallery/add',
+      'menu_name' => 'create-cats',
+      'weight' => 0,
+    ),
+    array(
+      'link_title' => 'Image galleries',
+      'link_path' => 'admin/structure/taxonomy/image_gallery',
+      'menu_name' => 'manage-cats',
+      'weight' => 0,
+    ),
+  );
+  foreach ($links as $item) {
+    menu_link_save($item);
+  }
+
+  // Update the menu router information.
+  menu_rebuild();
+}
+
+function _image_gallery_install_vocabulary() {
+  // Create the Image Galleries vocabulary if it doesn't already exist.
+  $vocabs = taxonomy_get_vocabularies();
+  foreach ($vocabs as $vocab) {
+    if ($vocab->name == 'Image Galleries') {
+      $vocab_exists = TRUE;
+    }
+  }
+  if (!$vocab_exists) {
+      $description = st('Organize images into image galleries.');
+      $help = st('Add all image galleries you would like to associate with this image to the box on the right.');
+      $vocabulary = (object) array(
+        'name' => 'Image Galleries',
+        'description' => $description,
+        'machine_name' => 'image_galleries',
+        'help' => $help,
+      );
+      taxonomy_vocabulary_save($vocabulary);
+   }
+   
+   // Create the Slideshows vocabulary if it doesn't already exist.
+  $vocabs = taxonomy_get_vocabularies();
+  foreach ($vocabs as $vocab) {
+    if ($vocab->name == 'Slideshows') {
+      $vocab_exists = TRUE;
+    }
+  }
+  if (!$vocab_exists) {
+      $description = st('Organize images into slideshows.');
+      $help = st('Add all slideshows you would like to associate with this image to the box on the right.');
+      $vocabulary = (object) array(
+        'name' => 'Slideshows',
+        'description' => $description,
+        'machine_name' => 'slideshows',
+        'help' => $help,
+      );
+      taxonomy_vocabulary_save($vocabulary);
+   }
+}
+
+function image_gallery_update_7200() {
+  _image_gallery_install_navigation();
+}
+
+function image_gallery_update_7201() {
+  _image_gallery_install_navigation();
+}
+
+function image_gallery_update_7202() {
+  _image_gallery_install_variables();
+  _image_gallery_install_vocabulary();
+  _image_gallery_install_permissions();
+}
+
+function image_gallery_update_7203() {
+  _image_gallery_install_variables();
+  _image_gallery_install_vocabulary();
+  /**
+   * Removing the permissions setup as it's causing problems with older sites.
+   * Permissions will have to be setup manually. 
+   */
+  //_image_gallery_install_permissions();
+}
+
